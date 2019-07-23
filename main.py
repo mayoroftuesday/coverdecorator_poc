@@ -14,6 +14,7 @@ def bar():
 
 class FoobarTestCase(unittest.TestCase):
 
+    #@covers('main.foo', 'main.bar') # Use this line to cover both foo and bar
     @covers('main.foo')
     def test_foo(self):
         """ This test only covers foo(), we don't want to count lines executed in bar() """
