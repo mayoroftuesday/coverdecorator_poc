@@ -1,7 +1,8 @@
 """
 Covers Decorator
 
-When a function is decorated with @covers(...), it will write the target function to a database.
+When a function is decorated with @covers(...), it will write the target function filename and source file line numbers
+to a database.
 
 This can be used by the cover decorator plugin to determine which executed lines should be included in the coverage
 output.
@@ -14,13 +15,15 @@ https://github.com/testing-cabal/mock/blob/master/mock/mock.py
 
 import dis
 
+
+#### Some utilities stolen from Mock ####
+
 def _dot_lookup(thing, comp, import_path):
     try:
         return getattr(thing, comp)
     except AttributeError:
         __import__(import_path)
         return getattr(thing, comp)
-
 
 def _importer(target):
     components = target.split('.')
@@ -32,12 +35,15 @@ def _importer(target):
         thing = _dot_lookup(thing, comp, import_path)
     return thing
 
-# Reset file
+
+#### Covers Decorator ####
+
+# Reset output file
 coverage_output = open(".coverage.include", "w")
 coverage_output.close()
 
 def covers(covers_object):
-    """ Coverage decorator wrapper """
+    """ Decorator wrapper """
 
     def decorator_covers(function):
         """ Generated coverage decorator """
