@@ -42,18 +42,21 @@ def _importer(target):
 coverage_output = open(".coverage.include", "w")
 coverage_output.close()
 
-def covers(covers_object):
-    """ Decorator wrapper """
+def covers(*covers_objects):
+    """ Covers decorator
+        Usage: Put a list of targets in the @covers decorator of a test function to indicate what pieces of code it is
+        intended to test.
+
+        ```
+        @covers('my.project.target1', 'my.project.target2')
+        def test_function():
+            # perform tests that cover target1 and target2
+        ```
+    """
+
 
     def decorator_covers(function):
         """ Generated coverage decorator """
-
-        # Load in the intended coverage target of the test function
-        target = _importer(covers_object)
-
-        # Get the target's source filename and line numbers
-        filename = target.__code__.co_filename
-        linenumbers = [x[1] for x in dis.findlinestarts(target.__code__)]
 
         # Read in the existing database of covered line numbers (inefficient storage method but it works for now)
         included_lines = {}
@@ -66,11 +69,19 @@ def covers(covers_object):
         except IOError as e:
             pass
 
-        # Add target's covered line numbers to the database
-        line_numbers = set([str(x) for x in linenumbers])
-        if filename in included_lines:
-            line_numbers.update(included_lines[filename].split(','))
-        included_lines[filename] = ','.join(line_numbers)
+        # Load in the intended coverage targets of the test function
+        for covers_object in covers_objects:
+            target = _importer(covers_object)
+
+            # Get the target's source filename and line numbers
+            filename = target.__code__.co_filename
+            linenumbers = [x[1] for x in dis.findlinestarts(target.__code__)]
+
+            # Add target's covered line numbers to the database
+            line_numbers = set([str(x) for x in linenumbers])
+            if filename in included_lines:
+                line_numbers.update(included_lines[filename].split(','))
+            included_lines[filename] = ','.join(line_numbers)
 
         # Write the database back to file
         with open(".coverage.include", "w") as output_file:

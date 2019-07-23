@@ -35,19 +35,10 @@ class CoverDecoratorTracer(coverage.plugin.FileTracer):
     """ Custom tracer that only counts lines included by the @covers decorator """
 
     included_line_numbers = []
+    initialized = False
 
     def __init__(self, filename):
         self.filename = filename
-
-        # Read in the database created by the @covers decorator and determine if there are any included lines
-        # for this file
-        with open(".coverage.include") as included_lines:
-            for line in included_lines.readlines():
-                parts = line.split("|")
-                filename = parts[0]
-                if filename == self.filename:
-                    self.included_line_numbers = [int(lineno) for lineno in parts[1].strip().split(",")]
-                    print(self.included_line_numbers)
 
     def source_filename(self):
         """ Required implementation """
@@ -55,6 +46,17 @@ class CoverDecoratorTracer(coverage.plugin.FileTracer):
 
     def line_number_range(self, frame):
         """ Only report line numbers if they are in the include list """
+
+        if not self.initialized:
+            # Read in the database created by the @covers decorator and determine if there are any included lines
+            # for this file
+            with open(".coverage.include") as included_lines:
+                for line in included_lines.readlines():
+                    parts = line.split("|")
+                    filename = parts[0]
+                    if filename == self.filename:
+                        self.included_line_numbers = [int(lineno) for lineno in parts[1].strip().split(",")]
+
         lineno = frame.f_lineno
 
         if lineno in self.included_line_numbers:
